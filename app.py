@@ -7,13 +7,13 @@ from PIL import Image
 import os
 import io
 import base64
-from googletrans import Translator # type: ignore
+from googletrans import Translator
 import requests
 
 app = Flask(__name__)
 
 # Force legacy Keras
-os.environ["TF_USE_LEGACY_KERAS"] = "1"
+# os.environ["TF_USE_LEGACY_KERAS"] = "1"
 
 # Load models (similar to the Streamlit version)
 def load_model(model_path):
