@@ -7,20 +7,47 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <h1>Krushi Mitra - Crop Disease Detection</h1>
-    <form id="uploadForm">
-        <label for="plantType">Select Plant:</label>
-        <select id="plantType">
-            <option value="sugarcane">Sugarcane</option>
-            <option value="maize">Maize</option>
-            <option value="cotton">Cotton</option>
-            <option value="rice">Rice</option>
-            <option value="wheat">Wheat</option>
-        </select>
-        <input type="file" id="fileInput" accept="image/*">
-        <button type="submit">Upload</button>
-    </form>
-    <p id="result"></p>
+    <div class="container">
+        <h1>🌿 Krushi Mitra</h1>
+        <div class="upload-section">
+            <div class="input-group">
+                <label for="plantType">Select Plant Type:</label>
+                <select id="plantType">
+                    <option value="sugarcane">Sugarcane</option>
+                    <option value="maize">Maize</option>
+                    <option value="cotton">Cotton</option>
+                    <option value="rice">Rice</option>
+                    <option value="wheat">Wheat</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Upload Plant Image:</label>
+                <div class="file-input-container">
+                    <input type="file" id="fileInput" accept="image/*">
+                    <div class="upload-placeholder">
+                        <div class="upload-icon">📸</div>
+                        <p>Click or drag image here</p>
+                    </div>
+                </div>
+            </div>
+
+            <img id="imagePreview" alt="Image preview">
+            
+            <button type="button" id="submitBtn">Analyze Plant</button>
+
+            <div id="result">
+                <div class="prediction-section">
+                    <div class="prediction-label">Predicted Disease:</div>
+                    <div id="predictedDisease"></div>
+                </div>
+                <div class="prediction-section">
+                    <div class="prediction-label">Recommended Treatment:</div>
+                    <div id="recommendedPesticide"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>

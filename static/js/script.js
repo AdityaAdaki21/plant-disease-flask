@@ -1,33 +1,91 @@
-document.getElementById("uploadForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
-    
-    let fileInput = document.getElementById("fileInput").files[0];
-    let plantType = document.getElementById("plantType").value;
+// DOM Elements
+const fileInput = document.getElementById('fileInput');
+const imagePreview = document.getElementById('imagePreview');
+const submitBtn = document.getElementById('submitBtn');
+const result = document.getElementById('result');
+const predictedDisease = document.getElementById('predictedDisease');
+const recommendedPesticide = document.getElementById('recommendedPesticide');
 
-    if (!fileInput) {
-        alert("Please upload an image.");
+// Image preview functionality
+fileInput.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imagePreview.src = e.target.result;
+            imagePreview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+    }
+});
+
+// Drag and drop functionality
+const dropZone = document.querySelector('.file-input-container');
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.style.backgroundColor = '#f0f0f0';
+});
+
+dropZone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    dropZone.style.backgroundColor = '';
+});
+
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.style.backgroundColor = '';
+    
+    if (e.dataTransfer.files.length) {
+        fileInput.files = e.dataTransfer.files;
+        const event = new Event('change');
+        fileInput.dispatchEvent(event);
+    }
+});
+
+// Form submission
+submitBtn.addEventListener('click', async function() {
+    const plantType = document.getElementById('plantType').value;
+
+    if (!fileInput.files[0]) {
+        alert('Please upload an image first.');
         return;
     }
 
-    let formData = new FormData();
-    formData.append("file", fileInput);
-    formData.append("plant_type", plantType);
+    const formData = new FormData();
+    formData.append('file', fileInput.files[0]);
+    formData.append('plant_type', plantType);
 
     try {
-        let response = await fetch("classify", {  // Corrected URL
-            method: "POST",
+        // Update button state
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Analyzing...';
+        
+        // Hide previous results
+        result.classList.remove('result-visible');
+
+        const response = await fetch('classify', {
+            method: 'POST',
             body: formData
         });
 
         if (!response.ok) {
-            throw new Error("Failed to get a response from the server.");
+            throw new Error('Server response was not ok');
         }
 
-        let result = await response.json();
-        document.getElementById("result").innerText = "Predicted Disease: " + result.predicted_class +
-            "\nRecommended Pesticide: " + result.recommended_pesticide;
+        const data = await response.json();
+        
+        // Update results
+        predictedDisease.textContent = data.predicted_class;
+        recommendedPesticide.textContent = data.recommended_pesticide;
+        result.classList.add('result-visible');
+
     } catch (error) {
-        console.error("Error:", error);
-        document.getElementById("result").innerText = "Error: Could not fetch prediction.";
+        console.error('Error:', error);
+        alert('An error occurred while analyzing the image. Please try again.');
+    } finally {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Analyze Plant';
     }
 });
