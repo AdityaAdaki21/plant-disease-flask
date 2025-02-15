@@ -25,7 +25,6 @@ pesticide_recommendations = {
     'strip_rust': 'Fungicides containing Azoxystrobin or Propiconazole'
 }
 
-
 def recommend_pesticide(predicted_class):
     if predicted_class == 'Healthy':
         return 'No need for any pesticide, plant is healthy'
@@ -49,41 +48,49 @@ class_names = {
     'wheat': ['Healthy', 'septoria', 'strip_rust'],
 }
 
-
 def preprocess_image(image_path):
     image = Image.open(image_path).convert("RGB")
     image = image.resize((224, 224))
     img_array = np.array(image).astype("float32") / 255.0
     return np.expand_dims(img_array, axis=0)
 
-
 @app.route('/')
 def home():
+    print(f"Rendering home page.")
     return render_template('index.html')
-
 
 @app.route('/classify', methods=['POST'])
 def classify_image():
     if 'file' not in request.files:
+        print("No file uploaded.")
         return jsonify({'error': 'No file uploaded'}), 400
 
     file = request.files['file']
     plant_type = request.form.get('plant_type')
+    
+    # Check if the provided plant type exists
     if plant_type not in models:
+        print(f"Invalid plant type: {plant_type}")
         return jsonify({'error': 'Invalid plant type'}), 400
 
     image = preprocess_image(file)
     predictions = models[plant_type].predict(image)
+    
+    # Print the predictions for debugging
+    predicted_classes = np.argmax(predictions, axis=1)
+    print(f"Predicted classes: {predicted_classes}")
+    
     predicted_index = np.argmax(predictions)
     predicted_class = class_names[plant_type][predicted_index]
     recommended_pesticide = recommend_pesticide(predicted_class)
+
+    # Print the recommended pesticide for debugging
+    print(f"Recommended pesticide for {predicted_class}: {recommended_pesticide}")
 
     return jsonify({
         'predicted_class': predicted_class,
         'recommended_pesticide': recommended_pesticide
     })
-
-
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5000)
