@@ -1,69 +1,27 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Krushi Mitra 🌱</title>
+    <title>Krushi Mitra</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <aside class="sidebar">
-            <h2 id="settingsTitle">Settings</h2>
-            <div class="language-selector">
-                <label for="language">Language:</label>
-                <select id="language">
-                    <option value="English">English</option>
-                    <option value="Marathi">मराठी</option>
-                </select>
-            </div>
-            
-            <div class="plant-selector">
-                <label for="plantType">Select Plant Type:</label>
-                <select id="plantType">
-                    <option value="sugarcane">Sugarcane</option>
-                    <option value="maize">Maize</option>
-                    <option value="cotton">Cotton</option>
-                    <option value="rice">Rice</option>
-                    <option value="wheat">Wheat</option>
-                </select>
-            </div>
-            
-            <div class="upload-section">
-                <label for="imageUpload" class="upload-label">Upload Plant Image</label>
-                <input type="file" id="imageUpload" accept="image/*" class="file-input">
-                <div id="preview" class="image-preview"></div>
-            </div>
-        </aside>
+    <h1>Krushi Mitra - Crop Disease Detection</h1>
+    <form id="uploadForm">
+        <label for="plantType">Select Plant:</label>
+        <select id="plantType">
+            <option value="sugarcane">Sugarcane</option>
+            <option value="maize">Maize</option>
+            <option value="cotton">Cotton</option>
+            <option value="rice">Rice</option>
+            <option value="wheat">Wheat</option>
+        </select>
+        <input type="file" id="fileInput" accept="image/*">
+        <button type="submit">Upload</button>
+    </form>
+    <p id="result"></p>
 
-        <main class="main-content">
-            <h1>Krushi Mitra</h1>
-            <p class="subtitle">Plant Disease Classification and Pesticide Recommendation</p>
-
-            <div class="classification-section">
-                <button id="classifyBtn" class="classify-btn">Classify</button>
-                <div id="results" class="results-container hidden">
-                    <div class="result-card">
-                        <h3>Predicted Class: <span id="predictedClass"></span></h3>
-                        <h3>Recommended Pesticide: <span id="recommendedPesticide"></span></h3>
-                    </div>
-
-                    <div class="tabs">
-                        <button class="tab-btn active" data-tab="detailedInfo">Detailed Info</button>
-                        <button class="tab-btn" data-tab="commercialProducts">Commercial Products</button>
-                        <button class="tab-btn" data-tab="moreArticles">More Articles</button>
-                    </div>
-
-                    <div class="tab-content">
-                        <div id="detailedInfo" class="tab-pane active"></div>
-                        <div id="commercialProducts" class="tab-pane"></div>
-                        <div id="moreArticles" class="tab-pane"></div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

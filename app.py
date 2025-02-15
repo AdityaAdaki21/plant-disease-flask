@@ -1,47 +1,14 @@
-# app.py
-from flask import Flask, render_template, request, jsonify
+import os
+import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
-import numpy as np
+from flask import Flask, request, jsonify, render_template
 from PIL import Image
-import os
-import io
-import base64
-from googletrans import Translator
 import requests
 
 app = Flask(__name__)
 
-# Force legacy Keras
-# os.environ["TF_USE_LEGACY_KERAS"] = "1"
-
-# Load models (similar to the Streamlit version)
-def load_model(model_path):
-    return tf.keras.models.load_model(
-        model_path,
-        custom_objects={"KerasLayer": hub.KerasLayer},
-        compile=False
-    )
-
-# Initialize models
-models = {
-    'sugarcane': load_model("models/sugercane_model.h5"),
-    'maize': load_model("models/maize_model.h5"),
-    'cotton': load_model("models/cotton_model.h5"),
-    'rice': load_model("models/rice.h5"),
-    'wheat': load_model("models/wheat_model.h5"),
-}
-
-# Class names (same as original)
-class_names = {
-    'sugarcane': ['Bacterial Blight', 'Healthy', 'Red Rot'],
-    'maize': ['Blight', 'Common_Rust', 'Gray_Leaf_Spot,Healthy'],
-    'cotton': ['Bacterial blight', 'curl_virus', 'fussarium_wilt', 'Healthy'],
-    'rice': ['Bacterial_blight', 'Blast', 'Brownspot', 'Tungro'],
-    'wheat': ['Healthy', 'septoria', 'strip_rust'],
-}
-
-# Pesticide recommendations (same as original)
+# Dictionary mapping diseases to recommended pesticides
 pesticide_recommendations = {
     'Bacterial Blight': 'Copper-based fungicides, Streptomycin',
     'Red Rot': 'Fungicides containing Mancozeb or Copper',
@@ -51,7 +18,6 @@ pesticide_recommendations = {
     'Bacterial blight': 'Copper-based fungicides, Streptomycin',
     'curl_virus': 'Insecticides such as Imidacloprid or Pyrethroids',
     'fussarium_wilt': 'Soil fumigants, Fungicides containing Thiophanate-methyl',
-    'Bacterial_blight': 'Copper-based fungicides, Streptomycin',
     'Blast': 'Fungicides containing Tricyclazole or Propiconazole',
     'Brownspot': 'Fungicides containing Azoxystrobin or Propiconazole',
     'Tungro': 'Insecticides such as Neonicotinoids or Pyrethroids',
@@ -59,46 +25,65 @@ pesticide_recommendations = {
     'strip_rust': 'Fungicides containing Azoxystrobin or Propiconazole'
 }
 
-def preprocess_image(image_file):
-    image = Image.open(io.BytesIO(image_file.read())).convert("RGB")
+
+def recommend_pesticide(predicted_class):
+    if predicted_class == 'Healthy':
+        return 'No need for any pesticide, plant is healthy'
+    return pesticide_recommendations.get(predicted_class, "No recommendation available")
+
+
+# Load H5 models
+models = {
+    'sugarcane': tf.keras.models.load_model("models/sugercane_model.h5", custom_objects={"KerasLayer": hub.KerasLayer}),
+    'maize': tf.keras.models.load_model("models/maize_model.h5", custom_objects={"KerasLayer": hub.KerasLayer}),
+    'cotton': tf.keras.models.load_model("models/cotton_model.h5", custom_objects={"KerasLayer": hub.KerasLayer}),
+    'rice': tf.keras.models.load_model("models/rice.h5", custom_objects={"KerasLayer": hub.KerasLayer}),
+    'wheat': tf.keras.models.load_model("models/wheat_model.h5", custom_objects={"KerasLayer": hub.KerasLayer}),
+}
+
+class_names = {
+    'sugarcane': ['Bacterial Blight', 'Healthy', 'Red Rot'],
+    'maize': ['Blight', 'Common_Rust', 'Gray_Leaf_Spot,Healthy'],
+    'cotton': ['Bacterial blight', 'curl_virus', 'fussarium_wilt', 'Healthy'],
+    'rice': ['Bacterial_blight', 'Blast', 'Brownspot', 'Tungro'],
+    'wheat': ['Healthy', 'septoria', 'strip_rust'],
+}
+
+
+def preprocess_image(image_path):
+    image = Image.open(image_path).convert("RGB")
     image = image.resize((224, 224))
     img_array = np.array(image).astype("float32") / 255.0
     return np.expand_dims(img_array, axis=0)
 
+
 @app.route('/')
-def index():
+def home():
     return render_template('index.html')
 
+
 @app.route('/classify', methods=['POST'])
-def classify():
-    if 'image' not in request.files:
-        return jsonify({'error': 'No image uploaded'}), 400
-    
-    image_file = request.files['image']
-    plant_type = request.form.get('plant_type', 'sugarcane')
-    
-    try:
-        input_image = preprocess_image(image_file)
-        predictions = models[plant_type].predict(input_image)
-        predicted_index = np.argmax(predictions)
-        predicted_class = class_names[plant_type][predicted_index]
-        pesticide = pesticide_recommendations.get(predicted_class, "No recommendation available")
-        
-        # Get additional information
-        plant_info = get_plant_info(predicted_class, plant_type)
-        commercial_products = get_commercial_product_info(pesticide)
-        additional_articles = get_more_web_info(f"{predicted_class} in {plant_type}")
-        
-        return jsonify({
-            'predicted_class': predicted_class,
-            'pesticide': pesticide,
-            'plant_info': plant_info,
-            'commercial_products': commercial_products,
-            'additional_articles': additional_articles
-        })
-    
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+def classify_image():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file uploaded'}), 400
+
+    file = request.files['file']
+    plant_type = request.form.get('plant_type')
+    if plant_type not in models:
+        return jsonify({'error': 'Invalid plant type'}), 400
+
+    image = preprocess_image(file)
+    predictions = models[plant_type].predict(image)
+    predicted_index = np.argmax(predictions)
+    predicted_class = class_names[plant_type][predicted_index]
+    recommended_pesticide = recommend_pesticide(predicted_class)
+
+    return jsonify({
+        'predicted_class': predicted_class,
+        'recommended_pesticide': recommended_pesticide
+    })
+
+
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=5000)
