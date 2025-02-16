@@ -71,7 +71,7 @@ def get_plant_info(disease, plant_type="Unknown"):
     """
     try:
         API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B-Instruct/v1/chat/completions"
-        headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_TOKEN')}"}
+        headers = {"Authorization": "Bearer {os.getenv('HUGGINGFACE_API_TOKEN')}"}
         data = {
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -89,6 +89,69 @@ def get_plant_info(disease, plant_type="Unknown"):
     except Exception as e:
         print("Other error occurred:", str(e))
     return {"detailed_info": ""}
+
+def get_web_pesticide_info(disease, plant_type="Unknown"):
+    query = f"site:agrowon.esakal.com {disease} in {plant_type}"
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key": os.getenv("GOOGLE_API_KEY"),
+        "cx": os.getenv("GOOGLE_CX"),
+        "q": query,
+        "num": 3
+    }
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        if "items" in data and len(data["items"]) > 0:
+            item = data["items"][0]
+            return {
+                "title": item.get("title", "No title available"),
+                "link": item.get("link", "#"),
+                "snippet": item.get("snippet", "No snippet available"),
+                "summary": item.get("snippet", "No snippet available")
+            }
+    except requests.exceptions.HTTPError as http_err:
+        print("Error retrieving web pesticide info:", http_err)
+        print("Response Content:", response.content)
+    except Exception as e:
+        print("Other error occurred:", str(e))
+    return None
+
+def get_more_web_info(query):
+    url = "https://www.googleapis.com/customsearch/v1"
+    params = {
+        "key": os.getenv("GOOGLE_API_KEY"),
+        "cx": os.getenv("GOOGLE_CX"),
+        "q": query,
+        "num": 3
+    }
+    try:
+        response = requests.get(url, params=params)
+        response.raise_for_status()
+        data = response.json()
+        results = []
+        if "items" in data:
+            for item in data["items"]:
+                results.append({
+                    "title": item.get("title", "No title available"),
+                    "link": item.get("link", "#"),
+                    "snippet": item.get("snippet", "No snippet available")
+                })
+        return results
+    except requests.exceptions.HTTPError as http_err:
+        print("Error retrieving additional articles:", http_err)
+        print("Response Content:", response.content)
+    except Exception as e:
+        print("Other error occurred:", str(e))
+    return []
+
+def get_commercial_product_info(recommendation):
+    indiamart_query = f"site:indiamart.com pesticide '{recommendation}'"
+    krishi_query = f"site:krishisevakendra.in/products pesticide '{recommendation}'"
+    indiamart_results = get_more_web_info(indiamart_query)
+    krishi_results = get_more_web_info(krishi_query)
+    return indiamart_results + krishi_results
 
 @app.route('/')
 def home():
@@ -123,10 +186,18 @@ def classify_image():
     # Get detailed plant info
     detailed_info = get_plant_info(predicted_class, plant_type)
     
+    # Get web pesticide info
+    web_pesticide_info = get_web_pesticide_info(predicted_class, plant_type)
+    
+    # Get commercial product info
+    commercial_product_info = get_commercial_product_info(recommended_pesticide)
+    
     return jsonify({
         'predicted_class': predicted_class,
         'recommended_pesticide': recommended_pesticide,
-        'detailed_info': detailed_info['detailed_info']
+        'detailed_info': detailed_info['detailed_info'],
+        'web_pesticide_info': web_pesticide_info,
+        'commercial_product_info': commercial_product_info
     })
 
 @app.route('/get_plant_info', methods=['POST'])
