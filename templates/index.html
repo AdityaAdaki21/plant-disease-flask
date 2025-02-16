@@ -20,7 +20,6 @@
                     <option value="wheat">Wheat</option>
                 </select>
             </div>
-
             <div class="input-group">
                 <label>Upload Plant Image:</label>
                 <div class="file-input-container">
@@ -31,11 +30,9 @@
                     </div>
                 </div>
             </div>
-
             <img id="imagePreview" alt="Image preview">
             
             <button type="button" id="submitBtn">Analyze Plant</button>
-
             <div id="result">
                 <div class="prediction-section">
                     <div class="prediction-label">Predicted Disease:</div>
@@ -45,10 +42,13 @@
                     <div class="prediction-label">Recommended Treatment:</div>
                     <div id="recommendedPesticide"></div>
                 </div>
+                <div class="prediction-section">
+                    <div class="prediction-label">Detailed Information:</div>
+                    <div id="detailedInfo"></div>
+                </div>
             </div>
         </div>
     </div>
-
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
 </body>
 </html>

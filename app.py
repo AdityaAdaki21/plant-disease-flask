@@ -5,8 +5,13 @@ import tensorflow_hub as hub
 from flask import Flask, request, jsonify, render_template
 from PIL import Image
 import requests
+from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.serving import run_simple
+from watchdog.observers import Observer
+from watchdog.events import FileSystemEventHandler
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
 # Dictionary mapping diseases to recommended pesticides
 pesticide_recommendations = {
@@ -29,7 +34,6 @@ def recommend_pesticide(predicted_class):
     if predicted_class == 'Healthy':
         return 'No need for any pesticide, plant is healthy'
     return pesticide_recommendations.get(predicted_class, "No recommendation available")
-
 
 # Load H5 models
 models = {
@@ -54,6 +58,38 @@ def preprocess_image(image_path):
     img_array = np.array(image).astype("float32") / 255.0
     return np.expand_dims(img_array, axis=0)
 
+def get_plant_info(disease, plant_type="Unknown"):
+    prompt = f"""
+    Disease Name: {disease}
+    Plant Type: {plant_type}
+    Explain this disease in a very simple way for a farmer. Include:
+    - Symptoms
+    - Causes
+    - Severity
+    - How It Spreads
+    - Treatment & Prevention
+    """
+    try:
+        API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B-Instruct/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {os.getenv('HUGGINGFACE_API_TOKEN')}"}
+        data = {
+            "messages": [
+                {"role": "system", "content": "You are a helpful assistant."},
+                {"role": "user", "content": prompt},
+            ]
+        }
+        response = requests.post(API_URL, headers=headers, json=data)
+        response.raise_for_status()
+        response_data = response.json()
+        detailed_info = response_data.get("choices", [{}])[0].get("message", {}).get("content", "")
+        return {"detailed_info": detailed_info}
+    except requests.exceptions.HTTPError as http_err:
+        print("HTTP error occurred:", http_err)
+        print("Response Content:", response.content)
+    except Exception as e:
+        print("Other error occurred:", str(e))
+    return {"detailed_info": ""}
+
 @app.route('/')
 def home():
     print(f"Rendering home page.")
@@ -64,7 +100,6 @@ def classify_image():
     if 'file' not in request.files:
         print("No file uploaded.")
         return jsonify({'error': 'No file uploaded'}), 400
-
     file = request.files['file']
     plant_type = request.form.get('plant_type')
     
@@ -72,7 +107,6 @@ def classify_image():
     if plant_type not in models:
         print(f"Invalid plant type: {plant_type}")
         return jsonify({'error': 'Invalid plant type'}), 400
-
     image = preprocess_image(file)
     predictions = models[plant_type].predict(image)
     
@@ -83,14 +117,40 @@ def classify_image():
     predicted_index = np.argmax(predictions)
     predicted_class = class_names[plant_type][predicted_index]
     recommended_pesticide = recommend_pesticide(predicted_class)
-
     # Print the recommended pesticide for debugging
     print(f"Recommended pesticide for {predicted_class}: {recommended_pesticide}")
-
+    
+    # Get detailed plant info
+    detailed_info = get_plant_info(predicted_class, plant_type)
+    
     return jsonify({
         'predicted_class': predicted_class,
-        'recommended_pesticide': recommended_pesticide
+        'recommended_pesticide': recommended_pesticide,
+        'detailed_info': detailed_info['detailed_info']
     })
 
+@app.route('/get_plant_info', methods=['POST'])
+def get_plant_info_route():
+    data = request.json
+    disease = data.get('disease')
+    plant_type = data.get('plant_type', 'Unknown')
+    detailed_info = get_plant_info(disease, plant_type)
+    return jsonify(detailed_info)
+
+class CustomHandler(FileSystemEventHandler):
+    def on_modified(self, event):
+        if not event.is_directory:
+            if event.src_path.endswith(".py") and not event.src_path.startswith("C:\\Users\\Admin\\AppData\\Local\\"):
+                print(f"Detected change in {event.src_path}, reloading...")
+                os._exit(0)
+
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    event_handler = CustomHandler()
+    observer = Observer()
+    observer.schedule(event_handler, path=os.getcwd(), recursive=True)
+    observer.start()
+    try:
+        run_simple('0.0.0.0', 5000, app, use_reloader=False, use_debugger=True)
+    finally:
+        observer.stop()
+        observer.join()
