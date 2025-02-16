@@ -49,6 +49,7 @@ dropZone.addEventListener('drop', (e) => {
 // Form submission
 submitBtn.addEventListener('click', async function() {
     const plantType = document.getElementById('plantType').value;
+    const language = document.getElementById('language').value;
     if (!fileInput.files[0]) {
         alert('Please upload an image first.');
         return;
@@ -56,6 +57,7 @@ submitBtn.addEventListener('click', async function() {
     const formData = new FormData();
     formData.append('file', fileInput.files[0]);
     formData.append('plant_type', plantType);
+    formData.append('language', language);
     try {
         // Update button state
         submitBtn.disabled = true;

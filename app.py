@@ -11,9 +11,16 @@ from werkzeug.serving import run_simple
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
 from dotenv import load_dotenv
+from googletrans import Translator
+import asyncio
+
 load_dotenv()
+
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
+
+# Initialize the translator
+translator = Translator()
 
 # Dictionary mapping diseases to recommended pesticides
 pesticide_recommendations = {
@@ -73,8 +80,7 @@ def get_plant_info(disease, plant_type="Unknown"):
     """
     try:
         API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B-Instruct/v1/chat/completions"
-        headers = {"Authorization": "Bearer os.getenv('HUGGINGFACE_API_TOKEN')"}
-        print(os.getenv('HUGGINGFACE_API_TOKEN'))
+        headers = {"Authorization": "Bearer os.getenv('HUGGINGFACE_API_KEY')"}
         data = {
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -102,7 +108,6 @@ def get_web_pesticide_info(disease, plant_type="Unknown"):
         "q": query,
         "num": 3
     }
-    print(os.getenv("GOOGLE_API_KEY"))
     try:
         response = requests.get(url, params=params)
         response.raise_for_status()
@@ -159,58 +164,60 @@ def get_commercial_product_info(recommendation):
 
 @app.route('/')
 def home():
-    print(f"Rendering home page.")
     return render_template('index.html')
 
 @app.route('/classify', methods=['POST'])
-def classify_image():
+async def classify_image():
     if 'file' not in request.files:
-        print("No file uploaded.")
         return jsonify({'error': 'No file uploaded'}), 400
     file = request.files['file']
     plant_type = request.form.get('plant_type')
+    language = request.form.get('language', 'en')
     
-    # Check if the provided plant type exists
     if plant_type not in models:
-        print(f"Invalid plant type: {plant_type}")
         return jsonify({'error': 'Invalid plant type'}), 400
+    
     image = preprocess_image(file)
     predictions = models[plant_type].predict(image)
-    
-    # Print the predictions for debugging
-    predicted_classes = np.argmax(predictions, axis=1)
-    print(f"Predicted classes: {predicted_classes}")
     
     predicted_index = np.argmax(predictions)
     predicted_class = class_names[plant_type][predicted_index]
     recommended_pesticide = recommend_pesticide(predicted_class)
-    # Print the recommended pesticide for debugging
-    print(f"Recommended pesticide for {predicted_class}: {recommended_pesticide}")
     
-    # Get detailed plant info
     detailed_info = get_plant_info(predicted_class, plant_type)
-    
-    # Get web pesticide info
     web_pesticide_info = get_web_pesticide_info(predicted_class, plant_type)
-    
-    # Get commercial product info
     commercial_product_info = get_commercial_product_info(recommended_pesticide)
     
+    # Translate the results
+    detailed_info['detailed_info'] = await translate_text(detailed_info['detailed_info'], language)
+    recommended_pesticide = await translate_text(recommended_pesticide, language)
+    if web_pesticide_info:
+        web_pesticide_info['title'] = await translate_text(web_pesticide_info['title'], language)
+        web_pesticide_info['snippet'] = await translate_text(web_pesticide_info['snippet'], language)
+    
     return jsonify({
-        'predicted_class': predicted_class,
+        'predicted_class': await translate_text(predicted_class, language),
         'recommended_pesticide': recommended_pesticide,
         'detailed_info': detailed_info['detailed_info'],
         'web_pesticide_info': web_pesticide_info,
         'commercial_product_info': commercial_product_info
     })
 
-@app.route('/get_plant_info', methods=['POST'])
-def get_plant_info_route():
+@app.route('/translate', methods=['POST'])
+async def translate():
     data = request.json
-    disease = data.get('disease')
-    plant_type = data.get('plant_type', 'Unknown')
-    detailed_info = get_plant_info(disease, plant_type)
-    return jsonify(detailed_info)
+    text = data.get('text')
+    language = data.get('language', 'en')
+    translated_text = await translate_text(text, language)
+    return jsonify({'translated_text': translated_text})
+
+async def translate_text(text, language):
+    try:
+        translated = await translator.translate(text, dest=language)
+        return translated.text
+    except Exception as e:
+        print("Translation error:", e)
+        return text
 
 class CustomHandler(FileSystemEventHandler):
     def on_modified(self, event):
@@ -229,4 +236,3 @@ if __name__ == '__main__':
     finally:
         observer.stop()
         observer.join()
-#latest works
