@@ -1,8 +1,10 @@
+/* static/css/style.css */
 :root {
     --primary-green: #2e7d32;
     --light-green: #4caf50;
     --bg-green: #f1f8e9;
     --hover-green: #1b5e20;
+    --text-gray: #555;
 }
 
 body {
@@ -10,16 +12,17 @@ body {
     margin: 0;
     padding: 20px;
     background-color: var(--bg-green);
-    color: #333;
+    color: var(--text-gray);
+    line-height: 1.6;
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: 20px;
     background-color: white;
     border-radius: 12px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 h1 {
@@ -27,21 +30,29 @@ h1 {
     text-align: center;
     margin-bottom: 30px;
     font-size: 2.5em;
+    font-weight: bold;
 }
 
+/* Grid Layout */
 .upload-section {
-    display: flex;
-    flex-direction: column;
-    gap: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two-column layout */
+    gap: 40px;
     align-items: center;
     padding: 20px;
     background-color: #fff;
     border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+@media (max-width: 768px) {
+    .upload-section {
+        grid-template-columns: 1fr; /* Single column for smaller screens */
+    }
 }
 
 .input-group {
     width: 100%;
-    max-width: 400px;
 }
 
 label {
@@ -71,6 +82,7 @@ select {
     justify-content: center;
     cursor: pointer;
     overflow: hidden;
+    transition: background-color 0.3s;
 }
 
 .file-input-container:hover {
@@ -89,6 +101,15 @@ select {
     color: var(--light-green);
     font-size: 48px;
     margin-bottom: 10px;
+}
+
+.upload-placeholder {
+    text-align: center;
+}
+
+.upload-placeholder p {
+    color: #666;
+    margin: 5px 0;
 }
 
 #imagePreview {
@@ -111,6 +132,8 @@ button {
     transition: background-color 0.3s;
     width: 100%;
     max-width: 400px;
+    margin: 20px auto;
+    display: block;
 }
 
 button:hover {
@@ -123,37 +146,64 @@ button:disabled {
 }
 
 #result {
-    margin-top: 20px;
+    margin-top: 40px;
     padding: 20px;
     border-radius: 8px;
     background-color: #f5f5f5;
     display: none;
-    width: 100%;
-    max-width: 400px;
 }
 
 .result-visible {
     display: block !important;
 }
 
-.prediction-section {
-    margin-top: 15px;
-    padding: 15px;
-    border-left: 4px solid var(--primary-green);
-    background-color: #f9f9f9;
+.result-section {
+    margin-bottom: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    background-color: #fff;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.prediction-label {
-    font-weight: 600;
+.result-section h2 {
     color: var(--primary-green);
-    margin-bottom: 5px;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+    font-weight: bold;
 }
 
-.upload-placeholder {
-    text-align: center;
-}
-
-.upload-placeholder p {
-    color: #666;
+.result-section p {
     margin: 5px 0;
+}
+
+.result-section a {
+    color: var(--light-green);
+    text-decoration: none;
+}
+
+.result-section a:hover {
+    text-decoration: underline;
+}
+
+.product-item {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.product-item h3 {
+    margin: 0 0 10px;
+    font-size: 1.2em;
+    color: var(--primary-green);
+}
+
+.product-item a {
+    color: var(--light-green);
+    text-decoration: none;
+}
+
+.product-item a:hover {
+    text-decoration: underline;
 }

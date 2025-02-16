@@ -1,3 +1,4 @@
+<!-- templates/index.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,53 +11,58 @@
     <div class="container">
         <h1>🌿 Krushi Mitra</h1>
         <div class="upload-section">
-            <div class="input-group">
-                <label for="plantType">Select Plant Type:</label>
-                <select id="plantType">
-                    <option value="sugarcane">Sugarcane</option>
-                    <option value="maize">Maize</option>
-                    <option value="cotton">Cotton</option>
-                    <option value="rice">Rice</option>
-                    <option value="wheat">Wheat</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label>Upload Plant Image:</label>
-                <div class="file-input-container">
-                    <input type="file" id="fileInput" accept="image/*">
-                    <div class="upload-placeholder">
-                        <div class="upload-icon">📸</div>
-                        <p>Click or drag image here</p>
+            <div class="form-group">
+                <div class="input-group">
+                    <label for="plantType">Select Plant Type:</label>
+                    <select id="plantType">
+                        <option value="sugarcane">Sugarcane</option>
+                        <option value="maize">Maize</option>
+                        <option value="cotton">Cotton</option>
+                        <option value="rice">Rice</option>
+                        <option value="wheat">Wheat</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Upload Plant Image:</label>
+                    <div class="file-input-container">
+                        <input type="file" id="fileInput" accept="image/*">
+                        <div class="upload-placeholder">
+                            <div class="upload-icon">📸</div>
+                            <p>Click or drag image here</p>
+                        </div>
                     </div>
                 </div>
+                <button type="button" id="submitBtn">Analyze Plant</button>
             </div>
-            <img id="imagePreview" alt="Image preview">
-            
-            <button type="button" id="submitBtn">Analyze Plant</button>
-            <div id="result">
-                <div class="prediction-section">
-                    <div class="prediction-label">Predicted Disease:</div>
-                    <div id="predictedDisease"></div>
-                </div>
-                <div class="prediction-section">
-                    <div class="prediction-label">Recommended Treatment:</div>
-                    <div id="recommendedPesticide"></div>
-                </div>
-                <div class="prediction-section">
-                    <div class="prediction-label">Detailed Information:</div>
-                    <div id="detailedInfo"></div>
-                </div>
-                <div class="prediction-section">
-                    <div class="prediction-label">Web Pesticide Info:</div>
-                    <h3 id="webPesticideInfoTitle">No web information available</h3>
-                    <a id="webPesticideInfoLink" href="#" target="_blank"></a>
-                    <p id="webPesticideInfoSnippet"></p>
-                </div>
-                <div class="prediction-section">
-                    <div class="prediction-label">Commercial Product Info:</div>
-                    <div id="commercialProductInfoContainer">
-                        <p>No commercial products found</p>
-                    </div>
+            <div class="preview-group">
+                <img id="imagePreview" alt="Image preview">
+            </div>
+        </div>
+
+        <div id="result" class="result-section">
+            <h2>Analysis Results</h2>
+            <div class="result-item">
+                <div class="prediction-label">Predicted Disease:</div>
+                <div id="predictedDisease"></div>
+            </div>
+            <div class="result-item">
+                <div class="prediction-label">Recommended Treatment:</div>
+                <div id="recommendedPesticide"></div>
+            </div>
+            <div class="result-item">
+                <div class="prediction-label">Detailed Information:</div>
+                <div id="detailedInfo"></div>
+            </div>
+            <div class="result-item">
+                <div class="prediction-label">Web Pesticide Info:</div>
+                <h3 id="webPesticideInfoTitle">No web information available</h3>
+                <a id="webPesticideInfoLink" href="#" target="_blank"></a>
+                <p id="webPesticideInfoSnippet"></p>
+            </div>
+            <div class="result-item">
+                <div class="prediction-label">Commercial Product Info:</div>
+                <div id="commercialProductInfoContainer">
+                    <p>No commercial products found</p>
                 </div>
             </div>
         </div>

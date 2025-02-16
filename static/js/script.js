@@ -1,3 +1,4 @@
+// static/js/script.js
 // DOM Elements
 const fileInput = document.getElementById('fileInput');
 const imagePreview = document.getElementById('imagePreview');

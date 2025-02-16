@@ -1,3 +1,4 @@
+# app.py
 import os
 import numpy as np
 import tensorflow as tf
@@ -9,7 +10,8 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.serving import run_simple
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
-
+from dotenv import load_dotenv
+load_dotenv()
 app = Flask(__name__)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 
@@ -71,7 +73,8 @@ def get_plant_info(disease, plant_type="Unknown"):
     """
     try:
         API_URL = "https://api-inference.huggingface.co/models/meta-llama/Llama-3.2-1B-Instruct/v1/chat/completions"
-        headers = {"Authorization": "Bearer {os.getenv('HUGGINGFACE_API_TOKEN')}"}
+        headers = {"Authorization": "Bearer os.getenv('HUGGINGFACE_API_TOKEN')"}
+        print(os.getenv('HUGGINGFACE_API_TOKEN'))
         data = {
             "messages": [
                 {"role": "system", "content": "You are a helpful assistant."},
@@ -99,6 +102,7 @@ def get_web_pesticide_info(disease, plant_type="Unknown"):
         "q": query,
         "num": 3
     }
+    print(os.getenv("GOOGLE_API_KEY"))
     try:
         response = requests.get(url, params=params)
         response.raise_for_status()
@@ -225,3 +229,4 @@ if __name__ == '__main__':
     finally:
         observer.stop()
         observer.join()
+#latest works
