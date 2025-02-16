@@ -1,4 +1,3 @@
-// static/js/script.js
 // DOM Elements
 const fileInput = document.getElementById('fileInput');
 const imagePreview = document.getElementById('imagePreview');
@@ -77,7 +76,10 @@ submitBtn.addEventListener('click', async function() {
         // Update results
         predictedDisease.textContent = data.predicted_class;
         recommendedPesticide.textContent = data.recommended_pesticide;
-        detailedInfo.textContent = data.detailed_info;
+
+        // Format detailed information
+        const detailedInfoText = formatDetailedInfo(data.detailed_info);
+        detailedInfo.innerHTML = detailedInfoText;
         
         // Update web pesticide info
         if (data.web_pesticide_info) {
@@ -119,3 +121,30 @@ submitBtn.addEventListener('click', async function() {
         submitBtn.textContent = 'Analyze Plant';
     }
 });
+
+function formatDetailedInfo(info) {
+    // Split the text into sections based on headings
+    const sections = info.split('**');
+    let formattedInfo = '';
+
+    sections.forEach(section => {
+        section = section.trim();
+        if (section.startsWith('What is')) {
+            formattedInfo += `<h3>${section}</h3>`;
+        } else if (section.startsWith('Symptoms:')) {
+            formattedInfo += `<h4>${section}</h4>`;
+        } else if (section.startsWith('Causes:')) {
+            formattedInfo += `<h4>${section}</h4>`;
+        } else if (section.startsWith('Severity:')) {
+            formattedInfo += `<h4>${section}</h4>`;
+        } else if (section.startsWith('How It Spreads:')) {
+            formattedInfo += `<h4>${section}</h4>`;
+        } else if (section.startsWith('Treatment & Prevention:')) {
+            formattedInfo += `<h4>${section}</h4>`;
+        } else {
+            formattedInfo += `<p>${section}</p>`;
+        }
+    });
+
+    return formattedInfo;
+}
